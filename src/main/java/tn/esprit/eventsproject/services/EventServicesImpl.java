@@ -12,6 +12,7 @@ import tn.esprit.eventsproject.repositories.EventRepository;
 import tn.esprit.eventsproject.repositories.LogisticsRepository;
 import tn.esprit.eventsproject.repositories.ParticipantRepository;
 
+import javax.persistence.EntityNotFoundException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -26,23 +27,18 @@ public class EventServicesImpl implements IEventServices{
     private final ParticipantRepository participantRepository;
     private final LogisticsRepository logisticsRepository;
 
+
+
+    @Override
+    public Event addEvent(Event event) {
+        return eventRepository.save(event);
+    }
+
     @Override
     public Participant addParticipant(Participant participant) {
         return participantRepository.save(participant);
     }
 
-    @Override
-    public Event addAffectEvenParticipant(Event event, int idParticipant) {
-        Participant participant = participantRepository.findById(idParticipant).orElse(null);
-        if(participant.getEvents() == null){
-            Set<Event> events = new HashSet<>();
-            events.add(event);
-            participant.setEvents(events);
-        }else {
-            participant.getEvents().add(event);
-        }
-        return eventRepository.save(event);
-    }
 
     @Override
     public Event addAffectEvenParticipant(Event event) {
@@ -59,6 +55,21 @@ public class EventServicesImpl implements IEventServices{
         }
         return eventRepository.save(event);
     }
+    @Override
+    public Event addAffectEvenParticipant(Event event, int idParticipant) {
+        Participant participant = participantRepository.findById(idParticipant)
+            .orElseThrow(() -> new EntityNotFoundException("Participant not found with id: " + idParticipant));
+
+        if (event.getParticipants() == null) {
+            event.setParticipants(new HashSet<>());
+        }
+
+        event.getParticipants().add(participant);
+        eventRepository.save(event);
+
+        return event;
+    }
+
 
     @Override
     public Logistics addAffectLog(Logistics logistics, String descriptionEvent) {
